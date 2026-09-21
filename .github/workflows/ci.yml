@@ -98,6 +98,8 @@ jobs:
 
       # The loop must come up, export metrics and stop on its own, with no
       # core reachable -- that is the degraded path a deployment hits first.
+      # 2>&1 is required: the loop logs to stderr, so a bare pipe would tee
+      # an empty file and the grep below would fail on a healthy run.
       - name: Smoke-test the loop with no core reachable
         run: |
           docker run --rm \
@@ -105,7 +107,7 @@ jobs:
             -e SIMULATION_INTERVAL=0 \
             -e SLICE_PROFILE_MAP=0=6,1=7 \
             -e RAEMIS_API_URL=http://127.0.0.1:1/unreachable \
-            slice-simulator:ci | tee /tmp/smoke.log
+            slice-simulator:ci 2>&1 | tee /tmp/smoke.log
           grep -q "Reached MAX_ITERATIONS=3" /tmp/smoke.log
 
   secrets:
