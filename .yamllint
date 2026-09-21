@@ -1,0 +1,15 @@
+---
+extends: default
+
+rules:
+  line-length:
+    max: 120
+    level: warning
+  # Helm templates are not valid YAML until rendered.
+  comments:
+    min-spaces-from-content: 1
+  truthy:
+    check-keys: false
+
+ignore: |
+  charts/*/templates/

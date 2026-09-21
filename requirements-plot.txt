@@ -1,0 +1,5 @@
+# Only needed for simulator/plot_results.py, which renders the offline figures.
+# The container image does not install these.
+-r requirements.txt
+matplotlib>=3.7,<4.0
+numpy>=1.24,<3.0

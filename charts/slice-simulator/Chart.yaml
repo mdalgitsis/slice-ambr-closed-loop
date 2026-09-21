@@ -1,0 +1,12 @@
+---
+apiVersion: v2
+name: slice-simulator
+description: Closed-loop 5G slice AMBR reconfiguration with a Prometheus exporter
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+keywords:
+  - 5g
+  - network-slicing
+  - closed-loop
+  - prometheus

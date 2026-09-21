@@ -1,0 +1,49 @@
+---
+image:
+  repository: ghcr.io/mdalgitsis/slice-simulator
+  tag: "0.1.0"
+  pullPolicy: IfNotPresent
+
+imagePullSecrets: []
+
+# Allocation policy, as module.path:ClassName. The bundled baseline is
+# closed-form; point this at your own class to swap in a learned policy.
+agent: "agents.static_baseline:ProportionalFairAgent"
+
+loop:
+  initialAmbr: 50
+  reconfigTriggerThreshold: 0.8
+  intervalSeconds: 25
+  # 0 runs forever; a positive value stops after N iterations.
+  maxIterations: 0
+
+core:
+  # The 5G core's subscription-profile API. RFC 5737 documentation address:
+  # replace with your own before deploying.
+  apiUrl: "https://192.0.2.10:30443/api/subscription_profile"
+  # Maps slice index to the core's subscription profile id.
+  sliceProfileMap: "0=1,1=2"
+  verifyTls: true
+  # Credentials are read from a pre-existing Secret; this chart never holds
+  # them in values. Leave blank to run without authentication.
+  existingSecret: ""
+  usernameKey: username
+  passwordKey: password
+
+service:
+  port: 8999
+
+serviceMonitor:
+  enabled: true
+  interval: 5s
+  # Must match the label your Prometheus instance selects on.
+  labels:
+    release: prometheus
+
+resources:
+  limits:
+    cpu: "1"
+    memory: 512Mi
+  requests:
+    cpu: 500m
+    memory: 256Mi

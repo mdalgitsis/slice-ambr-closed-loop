@@ -1,0 +1,20 @@
+# Byte-compiled / cache
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+
+# Environments
+.venv/
+venv/
+
+# Packaged charts -- note the leading slash and the scoped subchart pattern:
+# an unanchored `charts/` would swallow the chart sources themselves.
+/dist/
+charts/*/charts/
+charts/*.tgz
+
+# Local overrides that may hold real endpoints or credentials
+values.local.yaml
+*.local.yaml
+.env

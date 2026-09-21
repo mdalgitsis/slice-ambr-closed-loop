@@ -1,0 +1,20 @@
+Slice AMBR Closed Loop
+Copyright 2024-2026 Michail Dalgitsis
+
+This work was produced in the context of the FREE6G research project at
+Nearby Computing.
+
+Attribution
+-----------
+The tabular Q-learning allocation policy used to produce the published results
+of this work was implemented by a colleague at Nearby Computing and is NOT
+included in this repository. The system design -- state and action encoding,
+reward shaping, the reconfiguration trigger, and the policy interface -- was
+developed jointly. See agents/README.md.
+
+The closed-loop controller, the 5G core integration, the Prometheus exporter,
+the Grafana dashboard provisioning, the container images, the Helm charts and
+the deployment tooling in this repository are the author's own work.
+
+This project integrated with a separate commercial orchestration platform in
+its original deployment. That layer is proprietary and out of scope here.

@@ -1,0 +1,11 @@
+---
+apiVersion: v2
+name: grafana-dashboard-manager
+description: Install and remove the slice dashboard in Grafana as release hooks
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+keywords:
+  - grafana
+  - dashboard
+  - observability

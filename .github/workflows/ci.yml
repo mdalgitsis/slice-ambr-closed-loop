@@ -1,0 +1,122 @@
+---
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  python:
+    name: Lint and test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements-dev.txt
+
+      - name: Ruff
+        run: ruff check .
+
+      - name: Yamllint
+        run: yamllint .
+
+      - name: Pytest
+        run: pytest -q
+
+  helm:
+    name: Helm
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: azure/setup-helm@v4
+        with:
+          version: v3.15.2
+
+      - name: Lint charts
+        run: |
+          helm lint charts/slice-simulator
+          helm lint charts/grafana-dashboard-manager \
+            --set grafana.existingSecret=ci-token
+
+      # Rendering only the defaults would leave every conditional block
+      # untested, so each branch is rendered explicitly.
+      - name: Render every conditional branch
+        run: |
+          helm template t charts/slice-simulator > /dev/null
+          helm template t charts/slice-simulator \
+            --set serviceMonitor.enabled=false > /dev/null
+          helm template t charts/slice-simulator \
+            --set core.existingSecret=raemis-creds > /dev/null
+          helm template t charts/slice-simulator \
+            --set 'imagePullSecrets[0].name=regcred' > /dev/null
+          helm template t charts/grafana-dashboard-manager \
+            --set grafana.existingSecret=ci-token > /dev/null
+
+      - name: A missing Grafana secret must fail the render
+        run: |
+          if helm template t charts/grafana-dashboard-manager > /dev/null 2>&1; then
+            echo "Expected the render to fail without grafana.existingSecret"
+            exit 1
+          fi
+
+      - name: Validate rendered manifests against Kubernetes schemas
+        run: |
+          curl -sSLo kubeconform.tar.gz \
+            https://github.com/yannh/kubeconform/releases/download/v0.6.7/kubeconform-linux-amd64.tar.gz
+          tar xf kubeconform.tar.gz kubeconform
+          helm template t charts/slice-simulator \
+            | ./kubeconform -strict -ignore-missing-schemas -summary
+          helm template t charts/grafana-dashboard-manager \
+            --set grafana.existingSecret=ci-token \
+            | ./kubeconform -strict -ignore-missing-schemas -summary
+
+  images:
+    name: Build images
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build the simulator image
+        run: docker build -f docker/simulator.Dockerfile -t slice-simulator:ci .
+
+      - name: Build the dashboard manager image
+        run: |
+          docker build -f docker/grafana-dashboard-manager.Dockerfile \
+            -t grafana-dashboard-manager:ci .
+
+      # The loop must come up, export metrics and stop on its own, with no
+      # core reachable -- that is the degraded path a deployment hits first.
+      - name: Smoke-test the loop with no core reachable
+        run: |
+          docker run --rm \
+            -e MAX_ITERATIONS=3 \
+            -e SIMULATION_INTERVAL=0 \
+            -e SLICE_PROFILE_MAP=0=6,1=7 \
+            -e RAEMIS_API_URL=http://127.0.0.1:1/unreachable \
+            slice-simulator:ci | tee /tmp/smoke.log
+          grep -q "Reached MAX_ITERATIONS=3" /tmp/smoke.log
+
+  secrets:
+    name: Secret scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

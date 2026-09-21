@@ -1,0 +1,15 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "slice-simulator.fullname" . }}
+  labels:
+    {{- include "slice-simulator.labels" . | nindent 4 }}
+spec:
+  selector:
+    {{- include "slice-simulator.selectorLabels" . | nindent 4 }}
+  ports:
+    - name: metrics
+      protocol: TCP
+      port: {{ .Values.service.port }}
+      targetPort: metrics

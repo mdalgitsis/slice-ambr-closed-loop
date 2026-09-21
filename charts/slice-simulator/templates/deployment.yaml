@@ -1,0 +1,82 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "slice-simulator.fullname" . }}
+  labels:
+    {{- include "slice-simulator.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "slice-simulator.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "slice-simulator.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+      containers:
+        - name: simulator
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          ports:
+            - name: metrics
+              containerPort: {{ .Values.service.port }}
+          env:
+            - name: SLICE_AGENT
+              value: {{ .Values.agent | quote }}
+            - name: PROMETHEUS_PORT
+              value: {{ .Values.service.port | quote }}
+            - name: INITIAL_AMBR
+              value: {{ .Values.loop.initialAmbr | quote }}
+            - name: RECONFIG_TRIGGER_THRESHOLD
+              value: {{ .Values.loop.reconfigTriggerThreshold | quote }}
+            - name: SIMULATION_INTERVAL
+              value: {{ .Values.loop.intervalSeconds | quote }}
+            - name: MAX_ITERATIONS
+              value: {{ .Values.loop.maxIterations | quote }}
+            - name: RAEMIS_API_URL
+              value: {{ .Values.core.apiUrl | quote }}
+            - name: SLICE_PROFILE_MAP
+              value: {{ .Values.core.sliceProfileMap | quote }}
+            - name: RAEMIS_VERIFY_TLS
+              value: {{ .Values.core.verifyTls | quote }}
+            {{- if .Values.core.existingSecret }}
+            - name: RAEMIS_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.core.existingSecret }}
+                  key: {{ .Values.core.usernameKey }}
+            - name: RAEMIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.core.existingSecret }}
+                  key: {{ .Values.core.passwordKey }}
+            {{- end }}
+          readinessProbe:
+            httpGet:
+              path: /metrics
+              port: metrics
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /metrics
+              port: metrics
+            initialDelaySeconds: 15
+            periodSeconds: 30
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}

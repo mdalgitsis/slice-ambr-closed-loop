@@ -1,0 +1,22 @@
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "gdm.fullname" . }}-delete
+  labels:
+    {{- include "gdm.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": pre-delete
+    "helm.sh/hook-weight": "0"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  backoffLimit: {{ .Values.backoffLimit }}
+  template:
+    metadata:
+      labels:
+        {{- include "gdm.labels" . | nindent 8 }}
+    spec:
+      {{- include "gdm.jobPodSpec" . | nindent 6 }}
+          args:
+            - delete
+            - {{ .Values.dashboard.uid | quote }}
