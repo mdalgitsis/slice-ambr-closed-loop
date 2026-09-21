@@ -81,11 +81,28 @@ class ProportionalFairAgent:
         return None, {"policy": "proportional-fair", "fairness": consider_fairness}
 
     def calculate_new_rand_demand(self) -> SliceVector:
-        """Uniform demand per slice, allowed to overshoot the budget by 10%."""
-        headroom = self.max_total_resource * 1.1 / self.num_slices
+        """Draw offered demand: a total load, then an uneven split.
+
+        Drawing each slice independently around half the budget produces a
+        demand mix that a fixed 50/50 allocation already serves, which makes
+        the whole system look pointless. Real traffic is not like that -- the
+        load moves *between* slices, and the total oversubscribes at peaks.
+
+        So: draw a total between 50% and 140% of the budget, then split it with
+        a random skew. That produces the two situations reconfiguration exists
+        for -- one slice starved while the other sits on unused headroom, and
+        genuine oversubscription where priority has to decide.
+        """
+        total = self._rng.uniform(
+            0.5 * self.max_total_resource, 1.4 * self.max_total_resource
+        )
+        weights = [self._rng.uniform(0.05, 0.95) for _ in range(self.num_slices)]
+        weight_sum = sum(weights) or 1.0
+
         demand: SliceVector = defaultdict(list)
         for slice_id in range(self.num_slices):
-            demand[slice_id] = [self._rng.uniform(self.min_demand, headroom)]
+            share = total * weights[slice_id] / weight_sum
+            demand[slice_id] = [max(self.min_demand, share)]
         return demand
 
     def map_allocation_2_action(self, ambr_dict: SliceVector) -> int:

@@ -12,7 +12,10 @@ behind a seven-member interface; everything else — the loop, the core client,
 the exporter, the dashboards, the charts — is indifferent to whether the policy
 is a learned one or three lines of arithmetic.
 
-Built for the **FREE6G** research project at Nearby Computing.
+Built for the **FREE6G** research project at Nearby Computing, and the
+mechanism behind one of the use cases in *6G-Core-in-the-Loop* (IEEE
+Communications Standards Magazine, June 2026) —
+[doi:10.1109/MCOMSTD.2026.3657234](https://doi.org/10.1109/MCOMSTD.2026.3657234).
 
 > **On the learned policy:** the tabular Q-learning agent behind the published
 > results was implemented by a colleague and is not included here — it is
@@ -95,6 +98,27 @@ Every reconfiguration is exported next to what a *fixed* allocation would have
 achieved on the same demand sample, so the dashboard shows the delta the loop
 is responsible for rather than an absolute number that flatters it.
 
+## Reproducing the paper's comparison
+
+The published study compares **FSA** (Fixed Slice Allocation — split the budget
+once, never move it) against **CCNO** (the closed-loop approach). Both arms run
+here over one shared, seeded demand sequence:
+
+```bash
+pip install -r requirements-plot.txt
+python -m simulator.offline_study --iterations 20
+```
+
+```
+FSA  mean acceptance ratio: 81.4%
+CCNO mean acceptance ratio: 90.0%
+Delta: +8.6 percentage points over 20 iterations, 12 reconfiguration(s)
+```
+
+This reproduces the *shape* of the published comparison, not its numbers — the
+learned policy that produced those is not included. Details and an honest
+reading of the figure are in [`docs/reproducing.md`](docs/reproducing.md).
+
 ## Configuration
 
 All environment variables; nothing is baked into an image.
@@ -153,7 +177,7 @@ Nothing else changes — same exporter, same dashboards, same charts.
 | [`charts/`](charts/) | Helm charts |
 | [`docker/`](docker/) | Container builds |
 | [`tests/`](tests/) | Test suite |
-| [`docs/`](docs/) | Architecture and deployment notes |
+| [`docs/`](docs/) | Architecture, deployment, and reproducing the paper |
 
 ## Known limitations
 
@@ -172,14 +196,27 @@ Stated plainly, because they are the first things a reviewer would find:
   costs accuracy at the margin.
 - **No hysteresis on the trigger.** Demand hovering at the threshold will
   reconfigure repeatedly. A real deployment wants a dwell time.
-- **The published results are not reproducible here**, because the policy that
-  produced them is not included.
+- **The published numbers are not reproducible here**, because the policy that
+  produced them is not included. The comparison's shape is — see
+  [`docs/reproducing.md`](docs/reproducing.md).
+- **The closed loop reacts rather than predicts.** It corrects only after
+  acceptance ratio has already fallen, so it still dips below the threshold.
+- **Demand is synthetic and deliberately stressful.** The generator moves load
+  between slices and oversubscribes at peaks, because that is the regime the
+  loop exists for. It is not a traffic model taken from measurement.
 
 ## Acknowledgements
 
 Produced for the **FREE6G** project at Nearby Computing. The Q-learning policy
 behind the published results was implemented by a colleague; the system design
 was joint work. See [`NOTICE`](NOTICE).
+
+If you use this work, please cite:
+
+> M. Dalgitsis, E. Datsika, C. Santana Casillas and A. Antonopoulos,
+> "6G-Core-in-the-Loop: Enabling Service and Network Orchestration in a
+> Cloud-Native Ecosystem," *IEEE Communications Standards Magazine*, vol. 10,
+> no. 2, pp. 72–79, June 2026, doi: 10.1109/MCOMSTD.2026.3657234.
 
 The original deployment integrated with a separate commercial orchestration
 platform; that layer is proprietary and out of scope here.

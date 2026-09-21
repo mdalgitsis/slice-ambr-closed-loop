@@ -2,7 +2,13 @@ Slice AMBR Closed Loop
 Copyright 2024-2026 Michail Dalgitsis
 
 This work was produced in the context of the FREE6G research project at
-Nearby Computing.
+Nearby Computing, and is the mechanism behind one of the use cases in:
+
+  M. Dalgitsis, E. Datsika, C. Santana Casillas and A. Antonopoulos,
+  "6G-Core-in-the-Loop: Enabling Service and Network Orchestration in a
+  Cloud-Native Ecosystem," IEEE Communications Standards Magazine,
+  vol. 10, no. 2, pp. 72-79, June 2026.
+  doi: 10.1109/MCOMSTD.2026.3657234
 
 Attribution
 -----------

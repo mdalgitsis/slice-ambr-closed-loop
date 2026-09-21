@@ -34,6 +34,16 @@ jobs:
       - name: Pytest
         run: pytest -q
 
+      # The tests cover run_study but not the figure, and a plotting break
+      # would otherwise only show up when someone tries to reproduce the paper.
+      - name: Render the paper's comparison figure
+        env:
+          MPLBACKEND: Agg
+        run: |
+          python -m simulator.offline_study --iterations 20 \
+            --output /tmp/fsa_vs_ccno.pdf
+          test -s /tmp/fsa_vs_ccno.pdf
+
   helm:
     name: Helm
     runs-on: ubuntu-latest

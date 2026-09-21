@@ -23,7 +23,8 @@ policy** with a priority-weighted, fairness-aware reward over a discretised
 demand/allocation state space.
 
 That implementation was written by a colleague at Nearby Computing as part of
-the same FREE6G work. The design — the state and action encoding, the reward
+the same FREE6G work (see [`docs/reproducing.md`](../docs/reproducing.md) for
+the paper it supports). The design — the state and action encoding, the reward
 shaping, the reconfiguration trigger, and how the policy plugs into the loop —
 was worked out jointly; the Q-learning module itself was theirs. It is their
 code to publish, not mine, so it is not included here and this repository does
